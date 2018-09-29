@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  <script src="flt.js"></script>
+</head>
+<body>
+  <main role="main" class="container">
+    <div class="mt-5">
+      <h1>FTL Save Editor</h1>
+      <div class="col-lg-6 mt-5">
+        <div class="custom-file">
+          <input type="file" class="custom-file-input" id="customFile" onchange="loadFile(this)">
+          <label class="custom-file-label" for="customFile">Choose continue.sav file</label>
+        </div>
+      </div>
+      <div class="mt-5 col-lg-12 row">
+        <form autocomplete="off" class="col-lg-6">
+          <div class="form-group row">
+            <label for="hull" class="col-lg-2 col-form-label">HULL</label>
+            <div class="col-lg-10">
+              <input type="number" min="0" max="65535" class="form-control" id="hull">
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="fuel" class="col-lg-2 col-form-label">FUEL</label>
+            <div class="col-lg-10">
+              <input type="number" min="0" max="65535" class="form-control" id="fuel">
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="drones" class="col-lg-2 col-form-label">DRONES</label>
+            <div class="col-lg-10">
+              <input type="number" min="0" max="65535" class="form-control" id="drones">
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="missiles" class="col-lg-2 col-form-label">MISSILES</label>
+            <div class="col-lg-10">
+              <input type="number" min="0" max="65535" class="form-control" id="missiles">
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="scrap" class="col-lg-2 col-form-label">SCRAP</label>
+            <div class="col-lg-10">
+              <input type="number" min="0" max="65535" class="form-control" id="scrap">
+            </div>
+          </div>
+          <button id="download" style="display: none" type="button" class="btn btn-primary btn-lg btn-block" onclick="saveFile()">Download</button>
+        </form>
+        <div class="col-lg-6"><img src="http://edgecats.net" alt="random cat"/></div>
+      </div>
+    </div>
+    <a href="https://github.com/torta/FTL-Save-Editor"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+  </main>
+  <script>
+    let ftl = new FTL();
+
+    function saveFile() {
+      let name = "continue.sav";
+      let type = "data:octet/stream";
+      ftl.setResources(
+        ftl.getResources().map(e => {
+          e[2] = ~~document.querySelector('input[type="number"]#' + e[0]).value;
+          return e;
+        })
+      );
+      if (navigator.msSaveBlob)
+        return navigator.msSaveBlob(
+          new Blob([ftl.dv.buffer], { type: type }),
+          name
+        );
+      let a = document.createElement("a");
+      document.body.appendChild(a);
+      let url = window.URL.createObjectURL(
+        new Blob([ftl.dv.buffer], { type: type })
+      );
+      a.href = url;
+      a.download = name;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    }
+
+    function loadFile(f) {
+      let file = f.files[0];
+      let fileReader = new FileReader();
+      let downloadBtn = document.querySelector("button#download");
+      fileReader.onloadend = e => {
+        let arrayBuffer = e.target.result;
+        ftl.load(arrayBuffer);
+        ftl
+          .getResources()
+          .forEach(
+            e =>
+              (document.querySelector('input[type="number"]#' + e[0]).value = e[2])
+          );
+        downloadBtn.style.display = "";
+      };
+      document.querySelector("form").reset();
+      downloadBtn.style.display = "none";
+      fileReader.readAsArrayBuffer(file);
+    }
+  </script>
+</body>
+</html>
